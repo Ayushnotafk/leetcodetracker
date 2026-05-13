@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LeetCode Revision Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --card: #16161f;
+    --border: #252535;
+    --accent: #f97316;
+    --accent2: #fb923c;
+    --green: #22c55e;
+    --yellow: #eab308;
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --purple: #a855f7;
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(249,115,22,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(249,115,22,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  /* Header */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .logo-icon {
+    width: 40px; height: 40px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+    box-shadow: 0 0 20px rgba(249,115,22,0.4);
+  }
+
+  .logo-text {
+    font-family: var(--sans);
+    font-size: 1.3rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .logo-text span { color: var(--accent); }
+
+  .stats-bar {
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .stat { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+  .stat-num { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+  .stat-num.orange { color: var(--accent); }
+  .stat-num.green { color: var(--green); }
+
+  /* Add form */
+  .add-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .add-section::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+  }
+
+  .section-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1rem;
+    font-weight: 600;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 140px 140px auto;
+    gap: 0.75rem;
+    align-items: end;
+  }
+
+  .field { display: flex; flex-direction: column; gap: 0.4rem; }
+
+  label {
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  input, select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    padding: 0.6rem 0.9rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+  }
+
+  input:focus, select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(249,115,22,0.1);
+  }
+
+  select option { background: var(--surface); }
+
+  .btn-add {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 0.6rem 1.2rem;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    white-space: nowrap;
+    letter-spacing: 0.05em;
+  }
+
+  .btn-add:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(249,115,22,0.4);
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .tab {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .tab .badge {
+    background: var(--border);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 0.65rem;
+    min-width: 20px;
+    text-align: center;
+    transition: all 0.15s;
+  }
+
+  .tab.active {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+  }
+
+  .tab.active .badge {
+    background: rgba(0,0,0,0.25);
+    color: #000;
+  }
+
+  .tab:not(.active):hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* Question cards */
+  .questions-list { display: flex; flex-direction: column; gap: 0.75rem; }
+
+  .q-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 1rem;
+    transition: border-color 0.2s, transform 0.15s;
+    animation: slideIn 0.3s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .q-card:hover { border-color: #333345; transform: translateX(2px); }
+
+  .q-num {
+    font-size: 0.7rem;
+    color: var(--muted);
+    min-width: 36px;
+    text-align: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.25rem 0.4rem;
+  }
+
+  .q-info { min-width: 0; }
+
+  .q-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 0.35rem;
+  }
+
+  .q-title a {
+    color: var(--text);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+  .q-title a:hover { color: var(--accent); }
+
+  .q-meta {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .diff-badge {
+    font-size: 0.62rem;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+  }
+
+  .diff-easy { background: rgba(34,197,94,0.15); color: var(--green); }
+  .diff-medium { background: rgba(234,179,8,0.15); color: var(--yellow); }
+  .diff-hard { background: rgba(239,68,68,0.15); color: var(--red); }
+
+  .tag-badge {
+    font-size: 0.62rem;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: rgba(168,85,247,0.12);
+    color: var(--purple);
+    font-weight: 600;
+  }
+
+  .date-added {
+    font-size: 0.62rem;
+    color: var(--muted);
+  }
+
+  /* Revision intervals */
+  .q-revisions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.4rem;
+  }
+
+  .intervals {
+    display: flex;
+    gap: 0.35rem;
+  }
+
+  .interval-pill {
+    font-size: 0.65rem;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.15s;
+    border: 1.5px solid transparent;
+    position: relative;
+  }
+
+  .interval-pill:hover { transform: scale(1.05); }
+
+  .interval-due {
+    background: rgba(239,68,68,0.15);
+    color: var(--red);
+    border-color: var(--red);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.3); }
+    50% { box-shadow: 0 0 0 4px rgba(239,68,68,0); }
+  }
+
+  .interval-soon {
+    background: rgba(234,179,8,0.12);
+    color: var(--yellow);
+    border-color: var(--yellow);
+  }
+
+  .interval-ok {
+    background: rgba(34,197,94,0.1);
+    color: var(--green);
+    border-color: rgba(34,197,94,0.3);
+  }
+
+  .interval-done {
+    background: rgba(107,107,128,0.1);
+    color: var(--muted);
+    border-color: var(--border);
+    text-decoration: line-through;
+  }
+
+  .q-actions {
+    display: flex;
+    gap: 0.4rem;
+    margin-top: 0.3rem;
+  }
+
+  .btn-icon {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 3px 7px;
+    font-size: 0.7rem;
+    transition: all 0.15s;
+  }
+  .btn-icon:hover { border-color: var(--red); color: var(--red); }
+  .btn-icon.link:hover { border-color: var(--blue); color: var(--blue); }
+
+  /* Empty state */
+  .empty {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--muted);
+  }
+  .empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.4; }
+  .empty-title { font-family: var(--sans); font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--text); opacity: 0.5; }
+  .empty-sub { font-size: 0.78rem; }
+
+  /* Today's revisions */
+  .today-banner {
+    background: linear-gradient(135deg, rgba(249,115,22,0.08), rgba(249,115,22,0.03));
+    border: 1px solid rgba(249,115,22,0.2);
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.82rem;
+  }
+
+  .today-icon { font-size: 1.2rem; }
+  .today-text { flex: 1; color: var(--muted); }
+  .today-count { font-weight: 700; font-size: 1.1rem; color: var(--accent); }
+
+  /* Progress ring */
+  .progress-section {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+  }
+
+  .prog-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+  }
+
+  .prog-label { font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
+  .prog-val { font-size: 1.4rem; font-weight: 700; font-family: var(--sans); }
+  .prog-sub { font-size: 0.65rem; color: var(--muted); margin-top: 0.2rem; }
+
+  .prog-val.r3 { color: var(--red); }
+  .prog-val.r10 { color: var(--yellow); }
+  .prog-val.r13 { color: var(--green); }
+
+  /* Search */
+  .search-row {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    align-items: center;
+  }
+
+  .search-input {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    padding: 0.55rem 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-input:focus { border-color: var(--accent); }
+
+  .filter-select {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    padding: 0.55rem 0.75rem;
+    outline: none;
+    cursor: pointer;
+  }
+
+  /* Tooltip */
+  .tooltip { position: relative; display: inline-block; }
+  .tooltip .tip {
+    visibility: hidden;
+    background: #222230;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.65rem;
+    padding: 4px 8px;
+    white-space: nowrap;
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 99;
+    pointer-events: none;
+  }
+  .tooltip:hover .tip { visibility: visible; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* Responsive */
+  @media (max-width: 700px) {
+    .form-row { grid-template-columns: 1fr 1fr; }
+    .form-row .btn-add { grid-column: span 2; }
+    .progress-section { grid-template-columns: repeat(3,1fr); }
+    header { flex-direction: column; gap: 1rem; align-items: flex-start; }
+    .q-card { grid-template-columns: auto 1fr; }
+    .q-revisions { grid-column: span 2; flex-direction: row; justify-content: space-between; align-items: center; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">⚡</div>
+      <div>
+        <div class="logo-text">Leet<span>Track</span></div>
+        <div style="font-size:0.62rem;color:var(--muted);letter-spacing:0.08em;">SPACED REPETITION ENGINE</div>
+      </div>
+    </div>
+    <div class="stats-bar">
+      <div class="stat"><span class="stat-num orange" id="hdr-total">0</span><span>Total</span></div>
+      <div class="stat"><span class="stat-num" id="hdr-due" style="color:var(--red)">0</span><span>Due Today</span></div>
+      <div class="stat"><span class="stat-num green" id="hdr-done">0</span><span>All Done</span></div>
+    </div>
+  </header>
+
+  <!-- Progress cards -->
+  <div class="progress-section">
+    <div class="prog-card">
+      <div class="prog-label">3-Day Reviews</div>
+      <div class="prog-val r3" id="p3">0</div>
+      <div class="prog-sub" id="p3-sub">pending</div>
+    </div>
+    <div class="prog-card">
+      <div class="prog-label">10-Day Reviews</div>
+      <div class="prog-val r10" id="p10">0</div>
+      <div class="prog-sub" id="p10-sub">pending</div>
+    </div>
+    <div class="prog-card">
+      <div class="prog-label">20-Day Reviews</div>
+      <div class="prog-val r13" id="p13">0</div>
+      <div class="prog-sub" id="p13-sub">pending</div>
+    </div>
+    <div class="prog-card">
+      <div class="prog-label">30-Day Reviews</div>
+      <div class="prog-val" style="color:var(--blue)" id="p30">0</div>
+      <div class="prog-sub" id="p30-sub">pending</div>
+    </div>
+  </div>
+
+  <!-- Add form -->
+  <div class="add-section">
+    <div class="section-label">// Add Question</div>
+    <div class="form-row">
+      <div class="field">
+        <label>Question Title</label>
+        <input type="text" id="inp-title" placeholder="e.g. Two Sum" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Difficulty</label>
+        <select id="inp-diff">
+          <option value="Easy">Easy</option>
+          <option value="Medium" selected>Medium</option>
+          <option value="Hard">Hard</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Tag / Topic</label>
+        <input type="text" id="inp-tag" placeholder="Array, DP, Graph…">
+      </div>
+      <button class="btn-add" onclick="addQuestion()">+ ADD</button>
+    </div>
+    <div style="margin-top:0.75rem;" class="field">
+      <label>LeetCode URL (optional)</label>
+      <input type="url" id="inp-url" placeholder="https://leetcode.com/problems/...">
+    </div>
+  </div>
+
+  <!-- Today banner -->
+  <div class="today-banner" id="today-banner" style="display:none">
+    <div class="today-icon">🔥</div>
+    <div class="today-text">Questions due for revision today</div>
+    <div class="today-count" id="today-count">0</div>
+  </div>
+
+  <!-- Tabs + Search -->
+  <div class="tabs">
+    <button class="tab active" onclick="setTab('all')" id="tab-all">All <span class="badge" id="badge-all">0</span></button>
+    <button class="tab" onclick="setTab('due')" id="tab-due">🔴 Due <span class="badge" id="badge-due">0</span></button>
+    <button class="tab" onclick="setTab('soon')" id="tab-soon">🟡 Soon <span class="badge" id="badge-soon">0</span></button>
+    <button class="tab" onclick="setTab('ok')" id="tab-ok">✅ On Track <span class="badge" id="badge-ok">0</span></button>
+  </div>
+
+  <div class="search-row">
+    <input class="search-input" type="text" id="search-inp" placeholder="🔍  Search questions..." oninput="renderList()">
+    <select class="filter-select" id="filter-diff" onchange="renderList()">
+      <option value="">All Difficulties</option>
+      <option value="Easy">Easy</option>
+      <option value="Medium">Medium</option>
+      <option value="Hard">Hard</option>
+    </select>
+  </div>
+
+  <!-- List -->
+  <div class="questions-list" id="qlist"></div>
+</div>
+
+<script>
+const INTERVALS = [3, 10, 20, 30];
+
+let questions = JSON.parse(localStorage.getItem('leettrack_v2') || '[]');
+let currentTab = 'all';
+
+function save() {
+  localStorage.setItem('leettrack_v2', JSON.stringify(questions));
+}
+
+function today() {
+  const d = new Date();
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+function addDays(date, n) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + n);
+  return d;
+}
+
+function daysDiff(d1, d2) {
+  return Math.floor((d2 - d1) / 86400000);
+}
+
+function getStatus(q) {
+  migrateQuestion(q);
+  // Returns 'due', 'soon', 'ok', or 'complete'
+  const t = today();
+  let hasDue = false, hasSoon = false;
+  INTERVALS.forEach((days, i) => {
+    if (q.done[i]) return;
+    const due = new Date(q.dueDates[i]);
+    const diff = daysDiff(t, due);
+    if (diff <= 0) hasDue = true;
+    else if (diff <= 2) hasSoon = true;
+  });
+  if (q.done.every(Boolean)) return 'complete';
+  if (hasDue) return 'due';
+  if (hasSoon) return 'soon';
+  return 'ok';
+}
+
+function addQuestion() {
+  const title = document.getElementById('inp-title').value.trim();
+  if (!title) { document.getElementById('inp-title').focus(); return; }
+
+  const diff = document.getElementById('inp-diff').value;
+  const tag = document.getElementById('inp-tag').value.trim();
+  const url = document.getElementById('inp-url').value.trim();
+  const added = today().toISOString();
+
+  const dueDates = INTERVALS.map(n => addDays(today(), n).toISOString());
+
+  questions.unshift({ id: Date.now(), title, diff, tag, url, added, dueDates, done: [false, false, false, false] });
+  save();
+
+  document.getElementById('inp-title').value = '';
+  document.getElementById('inp-tag').value = '';
+  document.getElementById('inp-url').value = '';
+  document.getElementById('inp-title').focus();
+
+  renderAll();
+}
+
+function markDone(id, idx) {
+  const q = questions.find(q => q.id === id);
+  if (!q) return;
+  q.done[idx] = !q.done[idx];
+  save();
+  renderAll();
+}
+
+function deleteQuestion(id) {
+  if (!confirm('Delete this question?')) return;
+  questions = questions.filter(q => q.id !== id);
+  save();
+  renderAll();
+}
+
+function setTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  renderList();
+}
+
+function formatDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function migrateQuestion(q) {
+  // Ensure dueDates and done arrays have entries for all 4 intervals
+  while (q.dueDates.length < INTERVALS.length) {
+    const missingIdx = q.dueDates.length;
+    q.dueDates.push(addDays(new Date(q.added), INTERVALS[missingIdx]).toISOString());
+  }
+  while (q.done.length < INTERVALS.length) {
+    q.done.push(false);
+  }
+  return q;
+}
+
+function intervalLabel(q, i) {
+  migrateQuestion(q);
+  const days = INTERVALS[i];
+  const t = today();
+  const due = new Date(q.dueDates[i]);
+  if (isNaN(due.getTime())) return { cls: 'interval-ok', label: `R${days}d` };
+  const diff = daysDiff(t, due);
+
+  if (q.done[i]) return { cls: 'interval-done', label: `R${days}d ✓` };
+  if (diff <= 0) return { cls: 'interval-due', label: `R${days}d` + (diff < 0 ? ` (${Math.abs(diff)}d late)` : ' TODAY') };
+  if (diff <= 2) return { cls: 'interval-soon', label: `R${days}d in ${diff}d` };
+  return { cls: 'interval-ok', label: `R${days}d (${formatDate(q.dueDates[i])})` };
+}
+
+function renderAll() {
+  updateStats();
+  renderList();
+}
+
+function updateStats() {
+  const t = today();
+  let due = 0, done = 0, p3 = 0, p10 = 0, p13 = 0, p30 = 0;
+
+  questions.forEach(q => {
+    const st = getStatus(q);
+    if (st === 'due') due++;
+    if (st === 'complete') done++;
+
+    INTERVALS.forEach((days, i) => {
+      const dueDate = new Date(q.dueDates[i]);
+      const diff = daysDiff(t, dueDate);
+      if (!q.done[i] && diff <= 0) {
+        if (i === 0) p3++;
+        if (i === 1) p10++;
+        if (i === 2) p13++;
+        if (i === 3) p30++;
+      }
+    });
+  });
+
+  const dueItems = questions.filter(q => {
+    return INTERVALS.some((d, i) => !q.done[i] && daysDiff(t, new Date(q.dueDates[i])) <= 0);
+  });
+  const allDue = dueItems.length;
+
+  document.getElementById('hdr-total').textContent = questions.length;
+  document.getElementById('hdr-due').textContent = due;
+  document.getElementById('hdr-done').textContent = done;
+  document.getElementById('p3').textContent = p3;
+  document.getElementById('p3-sub').textContent = p3 ? 'overdue / due' : 'all clear';
+  document.getElementById('p10').textContent = p10;
+  document.getElementById('p10-sub').textContent = p10 ? 'overdue / due' : 'all clear';
+  document.getElementById('p13').textContent = p13;
+  document.getElementById('p13-sub').textContent = p13 ? 'overdue / due' : 'all clear';
+  document.getElementById('p30').textContent = p30;
+  document.getElementById('p30-sub').textContent = p30 ? 'overdue / due' : 'all clear';
+
+  const banner = document.getElementById('today-banner');
+  const totalDue = p3 + p10 + p13 + p30;
+  if (totalDue > 0) {
+    banner.style.display = 'flex';
+    document.getElementById('today-count').textContent = totalDue + ' revision' + (totalDue > 1 ? 's' : '');
+  } else {
+    banner.style.display = 'none';
+  }
+
+  // Update badges
+  const counts = { all: 0, due: 0, soon: 0, ok: 0 };
+  questions.forEach(q => {
+    counts.all++;
+    const st = getStatus(q);
+    if (st === 'due') counts.due++;
+    else if (st === 'soon') counts.soon++;
+    else counts.ok++;
+  });
+  Object.keys(counts).forEach(k => {
+    document.getElementById('badge-' + k).textContent = counts[k];
+  });
+}
+
+function renderList() {
+  const search = document.getElementById('search-inp').value.toLowerCase();
+  const filterDiff = document.getElementById('filter-diff').value;
+  const list = document.getElementById('qlist');
+
+  let filtered = questions.filter(q => {
+    if (search && !q.title.toLowerCase().includes(search) && !q.tag.toLowerCase().includes(search)) return false;
+    if (filterDiff && q.diff !== filterDiff) return false;
+    if (currentTab === 'due' && getStatus(q) !== 'due') return false;
+    if (currentTab === 'soon' && getStatus(q) !== 'soon') return false;
+    if (currentTab === 'ok' && !['ok','complete'].includes(getStatus(q))) return false;
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="empty">
+      <div class="empty-icon">📭</div>
+      <div class="empty-title">${questions.length === 0 ? 'No questions yet' : 'Nothing here'}</div>
+      <div class="empty-sub">${questions.length === 0 ? 'Add your first LeetCode question above' : 'Try changing tab or search filter'}</div>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map((q, idx) => {
+    const pills = INTERVALS.map((d, i) => {
+      const { cls, label } = intervalLabel(q, i);
+      return `<div class="tooltip"><span class="interval-pill ${cls}" onclick="markDone(${q.id},${i})">${label}</span><span class="tip">${q.done[i] ? 'Click to undo' : 'Click to mark done'}</span></div>`;
+    }).join('');
+
+    const diffCls = { Easy: 'diff-easy', Medium: 'diff-medium', Hard: 'diff-hard' }[q.diff];
+    const titleHtml = q.url
+      ? `<a href="${q.url}" target="_blank" rel="noopener">${q.title} ↗</a>`
+      : q.title;
+
+    return `<div class="q-card">
+      <div class="q-num">#${String(questions.indexOf(q)+1).padStart(3,'0')}</div>
+      <div class="q-info">
+        <div class="q-title">${titleHtml}</div>
+        <div class="q-meta">
+          <span class="diff-badge ${diffCls}">${q.diff}</span>
+          ${q.tag ? `<span class="tag-badge">${q.tag}</span>` : ''}
+          <span class="date-added">Added ${formatDate(q.added)}</span>
+        </div>
+      </div>
+      <div class="q-revisions">
+        <div class="intervals">${pills}</div>
+        <div class="q-actions">
+          <button class="btn-icon" onclick="deleteQuestion(${q.id})" title="Delete">✕</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Enter key support
+document.getElementById('inp-title').addEventListener('keydown', e => { if (e.key === 'Enter') addQuestion(); });
+
+// Init — migrate any old questions missing the 4th interval
+questions.forEach(migrateQuestion);
+save();
+renderAll();
+</script>
+</body>
+</html>
